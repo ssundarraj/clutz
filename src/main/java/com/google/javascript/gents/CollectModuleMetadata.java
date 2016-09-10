@@ -6,7 +6,6 @@ import com.google.javascript.jscomp.JSError;
 import com.google.javascript.jscomp.NodeTraversal;
 import com.google.javascript.jscomp.NodeUtil;
 import com.google.javascript.rhino.Node;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
