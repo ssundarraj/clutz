@@ -45,6 +45,7 @@ dependencies {
 
   compile 'com.google.javascript:closure-compiler:v20160713'
   compile 'com.google.guava:guava:18.0'
+  compile 'com.google.protobuf:protobuf-java:2.4.1'
 
   testCompile 'junit:junit:4.11'
   testCompile 'com.google.truth:truth:0.25'
