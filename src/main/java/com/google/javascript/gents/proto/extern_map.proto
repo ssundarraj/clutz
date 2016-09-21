@@ -1,0 +1,15 @@
+syntax = "proto2";
+
+package gents;
+
+option java_package = "com.google.javascript.gents.proto";
+
+/*
+ * $protoc -I src/main/java/com/google/javascript/gents/proto \
+ *   --java_out=src/main/java/com/google/javascript/gents/proto \
+ *   src/main/java/com/google/javascript/gents/proto/extern_map.proto
+ */
+
+message ExternToTyping {
+  map<string, string> typings = 1;
+}
