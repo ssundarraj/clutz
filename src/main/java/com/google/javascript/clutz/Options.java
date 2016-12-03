@@ -55,6 +55,10 @@ public class Options {
       handler = StringArrayOptionHandler.class)
   List<String> entryPoints = new ArrayList<>();
 
+  @Option(name = "--report_missing_types",
+      usage = "report errors for missing types")
+  boolean reportMissingTypes = true;
+
   @Argument
   List<String> arguments = new ArrayList<>();
 

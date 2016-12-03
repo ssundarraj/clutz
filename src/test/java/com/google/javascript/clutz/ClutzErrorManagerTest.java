@@ -17,6 +17,17 @@ public class ClutzErrorManagerTest {
   }
 
   @Test
+  public void testIgnoreMissingSymbol() {
+    assertThatProgram(
+            "goog.provide('foo.x');",
+            "/** @param {some.Unknown} y */",
+            "foo.x = function(y) {};")
+        .ignoringMissingTypes()
+        .diagnosticStream()
+        .isEmpty();
+  }
+
+  @Test
   public void testDuplicateSymbol() {
     // Useful
     assertThatProgram(

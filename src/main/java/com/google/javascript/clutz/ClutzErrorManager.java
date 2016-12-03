@@ -4,7 +4,6 @@ import com.google.javascript.jscomp.CheckLevel;
 import com.google.javascript.jscomp.JSError;
 import com.google.javascript.jscomp.MessageFormatter;
 import com.google.javascript.jscomp.PrintStreamErrorManager;
-
 import java.io.PrintStream;
 
 /**
@@ -13,11 +12,15 @@ import java.io.PrintStream;
  */
 final class ClutzErrorManager extends PrintStreamErrorManager {
   private final boolean debug;
-  boolean reportClutzMissingTypes = true;
+  private boolean reportMissingTypes;
 
-  ClutzErrorManager(PrintStream stream, MessageFormatter formatter, boolean debug) {
+  private boolean hasEmittedMissingTypesExplanation = false;
+
+  ClutzErrorManager(PrintStream stream, MessageFormatter formatter, boolean debug,
+      boolean reportMissingTypes) {
     super(formatter, stream);
     this.debug = debug;
+    this.reportMissingTypes = reportMissingTypes;
   }
 
   @Override
@@ -25,14 +28,18 @@ final class ClutzErrorManager extends PrintStreamErrorManager {
     // Ignore warnings in non-debug mode.
     if (!debug && level == CheckLevel.WARNING) return;
 
-    if (reportClutzMissingTypes
-        && error.description.contains("Bad type annotation. Unknown type")) {
-      // Prepend an error that hints at missing externs/dependencies.
-      reportClutzMissingTypes = false;
-      // Leave out the location on purpose, the specific places of missing types are reported from
-      // the original message; without a location this error sorts first, so that it is seen first.
-      this.report(CheckLevel.ERROR, JSError.make(DeclarationGenerator.CLUTZ_MISSING_TYPES));
-      // Fall through, still report the actual error below.
+    boolean isMissingTypeError = error.description.contains("Bad type annotation. Unknown type");
+    if (isMissingTypeError) {
+      if (!reportMissingTypes) return;  // Ignore the error, whole sale.
+      if (!hasEmittedMissingTypesExplanation) {
+        // Prepend an error that hints at missing externs/dependencies.
+        hasEmittedMissingTypesExplanation = true;
+        // Leave out the location on purpose, the specific places of missing types are reported from
+        // the original message; without a location this error sorts first, so that it is seen
+        // first.
+        this.report(CheckLevel.ERROR, JSError.make(DeclarationGenerator.CLUTZ_MISSING_TYPES));
+        // Fall through, still report the actual error below.
+      }
     }
     super.report(level, error);
   }
