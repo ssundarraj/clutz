@@ -1,6 +1,7 @@
 package com.google.javascript.clutz;
 
 import com.google.javascript.jscomp.CheckLevel;
+import com.google.javascript.jscomp.DiagnosticGroups;
 import com.google.javascript.jscomp.JSError;
 import com.google.javascript.jscomp.MessageFormatter;
 import com.google.javascript.jscomp.PrintStreamErrorManager;
@@ -28,9 +29,19 @@ final class ClutzErrorManager extends PrintStreamErrorManager {
     // Ignore warnings in non-debug mode.
     if (!debug && level == CheckLevel.WARNING) return;
 
-    boolean isMissingTypeError = error.description.contains("Bad type annotation. Unknown type");
-    if (isMissingTypeError) {
-      if (!reportMissingTypes) return;  // Ignore the error, whole sale.
+    boolean isUndefinedVar =
+        DiagnosticGroups.UNDEFINED_VARIABLES.matches(error)
+            || DiagnosticGroups.UNDEFINED_NAMES.matches(error);
+    boolean isMissingError =
+        error.description.contains("Bad type annotation. Unknown type")
+            || error.description.contains("namespace never provided")
+            || (error.description.contains("Required namespace")
+                && error.description.contains("never defined"))
+            || error.description.contains("never defined on")
+            || error.description.contains("not defined on any superclass")
+            || error.description.contains("illegal initialization of @define");
+    if (isUndefinedVar || isMissingError) {
+      if (!reportMissingTypes) return;  // Ignore the error completely.
       if (!hasEmittedMissingTypesExplanation) {
         // Prepend an error that hints at missing externs/dependencies.
         hasEmittedMissingTypesExplanation = true;

@@ -1223,6 +1223,9 @@ class DeclarationGenerator {
         boolean emitInstanceForObject = emitInstance &&
             (opts.emitPlatformExterns || !isDefinedInPlatformExterns(superType));
         Visitor<Void> visitor = new ExtendsImplementsTypeVisitor(emitInstanceForObject);
+        if (superType.isUnresolvedOrResolvedUnknown()) {
+          
+        }
         superType.visit(visitor);
       }
 
@@ -2251,6 +2254,7 @@ class DeclarationGenerator {
 
       @Override
       public Void caseUnknownType() {
+        emit(Constants.INTERNAL_NAMESPACE + ".UnknownType");
         return null;
       }
 

@@ -13,6 +13,7 @@ import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
+import org.kohsuke.args4j.spi.ExplicitBooleanOptionHandler;
 import org.kohsuke.args4j.spi.StringArrayOptionHandler;
 
 public class Options {
@@ -56,7 +57,8 @@ public class Options {
   List<String> entryPoints = new ArrayList<>();
 
   @Option(name = "--report_missing_types",
-      usage = "report errors for missing types")
+      usage = "report errors for missing types",
+      handler = ExplicitBooleanOptionHandler.class)
   boolean reportMissingTypes = true;
 
   @Argument
