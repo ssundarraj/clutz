@@ -35,3 +35,8 @@ missing_types.TypedefAlias = function() {}
  * @return {!some.thing.Missing}
  */
 missing_types.fn = function(a) {}
+
+missing_types.fnUsesMissingNs = function() {
+  missing_types.missingNamespace.foo();
+  missingTopLevelNamespace.bar();
+};

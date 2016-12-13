@@ -55,6 +55,7 @@ import com.google.javascript.rhino.jstype.Visitor;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -200,6 +201,26 @@ class DeclarationGenerator {
   DeclarationGenerator(Options opts) {
     this.opts = opts;
     this.compiler = new Compiler();
+    compiler.setForwardDeclaredTypes(new AbstractSet<String>() {
+      @Override
+      public boolean contains(Object o) {
+        return true;
+      }
+      
+      @Override
+      public boolean add(String e) {
+        return false;
+      }
+      
+      @Override
+      public Iterator<String> iterator() {
+        return Collections.<String>emptySet().iterator();
+      }
+      
+      @Override
+      public int size() {
+        return 0;
+      }});
     compiler.disableThreads();
     this.errorManager = new ClutzErrorManager(System.err,
         ErrorFormat.MULTILINE.toFormatter(compiler, true), opts.debug, opts.reportMissingTypes);
