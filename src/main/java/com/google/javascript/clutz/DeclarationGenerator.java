@@ -36,6 +36,7 @@ import com.google.javascript.rhino.JSDocInfo;
 import com.google.javascript.rhino.JSDocInfo.Visibility;
 import com.google.javascript.rhino.JSTypeExpression;
 import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.TypeI;
 import com.google.javascript.rhino.jstype.EnumElementType;
 import com.google.javascript.rhino.jstype.EnumType;
 import com.google.javascript.rhino.jstype.FunctionType;
@@ -173,6 +174,7 @@ class DeclarationGenerator {
   private final Options opts;
   private final Compiler compiler;
   private final ClutzErrorManager errorManager;
+  private final JSTypeRegistry typeRegistry;
   private StringWriter out = new StringWriter();
 
   /**
@@ -202,8 +204,9 @@ class DeclarationGenerator {
     this.errorManager = new ClutzErrorManager(System.err,
         ErrorFormat.MULTILINE.toFormatter(compiler, true), opts.debug, opts.reportMissingTypes);
     compiler.setErrorManager(errorManager);
-    UNKNOWN_TYPE = compiler.getTypeRegistry().getNativeType(JSTypeNative.UNKNOWN_TYPE);
-    NUMBER_TYPE = compiler.getTypeRegistry().getNativeType(JSTypeNative.NUMBER_TYPE);
+    typeRegistry = compiler.getTypeRegistry();
+    UNKNOWN_TYPE = typeRegistry.getNativeType(JSTypeNative.UNKNOWN_TYPE);
+    NUMBER_TYPE = typeRegistry.getNativeType(JSTypeNative.NUMBER_TYPE);
   }
 
   boolean hasErrors() {
@@ -885,6 +888,19 @@ class DeclarationGenerator {
       return isPrivate(type.getJSDocInfo());
     }
   }
+  
+  private JSType maybeWrapUnknownType(JSType type, JSTypeExpression typeAst) {
+    if (!type.isUnknownType()) {
+      return type;
+    }
+    TypeI namedType = typeAst.getRoot().getTypeI();
+    if (namedType != null) {
+      return (JSType) namedType; // Cast is safe: Clutz always uses Old Type Inference (OTI)
+    }
+    return typeRegistry.createNamedType(
+        Constants.INTERNAL_NAMESPACE + ".MissingTypeFixYourDeps", null, -1, -1);
+//    return type;
+  }
 
   private boolean isPrivate(String name) {
     TypedVar var = compiler.getTopScope().getOwnSlot(name);
@@ -997,7 +1013,10 @@ class DeclarationGenerator {
     if (proto == null) return null;
     ObjectType implicitProto = proto.getImplicitPrototype();
     if (implicitProto == null) return null;
-    return "Object".equals(implicitProto.getDisplayName()) ? null : implicitProto;
+    if ("Object".equals(implicitProto.getDisplayName())) {
+      return null;
+    }
+    return (ObjectType) maybeWrapUnknownType(implicitProto, type.getJSDocInfo().getBaseType());
   }
 
   private String getUnqualifiedName(TypedVar symbol) {
@@ -1223,9 +1242,6 @@ class DeclarationGenerator {
         boolean emitInstanceForObject = emitInstance &&
             (opts.emitPlatformExterns || !isDefinedInPlatformExterns(superType));
         Visitor<Void> visitor = new ExtendsImplementsTypeVisitor(emitInstanceForObject);
-        if (superType.isUnresolvedOrResolvedUnknown()) {
-          
-        }
         superType.visit(visitor);
       }
 
@@ -2265,6 +2281,7 @@ class DeclarationGenerator {
 
       @Override
       public Void caseNamedType(NamedType type) {
+        emitObjectType(type, emitInstanceForObject, true);
         return null;
       }
 

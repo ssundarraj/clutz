@@ -39,7 +39,8 @@ final class ClutzErrorManager extends PrintStreamErrorManager {
                 && error.description.contains("never defined"))
             || error.description.contains("never defined on")
             || error.description.contains("not defined on any superclass")
-            || error.description.contains("illegal initialization of @define");
+            || error.description.contains("illegal initialization of @define")
+            || error.description.contains("with type None");
     if (isUndefinedVar || isMissingError) {
       if (!reportMissingTypes) return;  // Ignore the error completely.
       if (!hasEmittedMissingTypesExplanation) {
