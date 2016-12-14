@@ -43,17 +43,17 @@ final class ClutzErrorManager extends PrintStreamErrorManager {
 //            || error.description.contains("not defined on any superclass")
 //            || error.description.contains("illegal initialization of @define")
 //            || error.description.contains("with type None");
-    if (partialCompileError) {
-      if (!reportMissingTypes) return;  // Ignore the error completely.
-      if (!hasEmittedMissingTypesExplanation) {
-        // Prepend an error that hints at missing externs/dependencies.
-        hasEmittedMissingTypesExplanation = true;
-        // Leave out the location on purpose, the specific places of missing types are reported from
-        // the original message; without a location this error sorts first, so that it is seen
-        // first.
-        this.report(CheckLevel.ERROR, JSError.make(DeclarationGenerator.CLUTZ_MISSING_TYPES));
-        // Fall through, still report the actual error below.
-      }
+    if (partialCompileError && !reportMissingTypes) {
+      return;  // Ignore the error completely.
+    }
+    if (!hasEmittedMissingTypesExplanation) {
+      // Prepend an error that hints at missing externs/dependencies.
+      hasEmittedMissingTypesExplanation = true;
+      // Leave out the location on purpose, the specific places of missing types are reported from
+      // the original message; without a location this error sorts first, so that it is seen
+      // first.
+      this.report(CheckLevel.ERROR, JSError.make(DeclarationGenerator.CLUTZ_MISSING_TYPES));
+      // Fall through, still report the actual error below.
     }
     super.report(level, error);
   }

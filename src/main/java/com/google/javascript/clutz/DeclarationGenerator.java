@@ -201,26 +201,30 @@ class DeclarationGenerator {
   DeclarationGenerator(Options opts) {
     this.opts = opts;
     this.compiler = new Compiler();
-    compiler.setForwardDeclaredTypes(new AbstractSet<String>() {
-      @Override
-      public boolean contains(Object o) {
-        return true;
-      }
-      
-      @Override
-      public boolean add(String e) {
-        return false;
-      }
-      
-      @Override
-      public Iterator<String> iterator() {
-        return Collections.<String>emptySet().iterator();
-      }
-      
-      @Override
-      public int size() {
-        return 0;
-      }});
+    if (!opts.reportMissingTypes) {
+      compiler.setForwardDeclaredTypes(
+          new AbstractSet<String>() {
+            @Override
+            public boolean contains(Object o) {
+              return true;
+            }
+
+            @Override
+            public boolean add(String e) {
+              return false;
+            }
+
+            @Override
+            public Iterator<String> iterator() {
+              return Collections.<String>emptySet().iterator();
+            }
+
+            @Override
+            public int size() {
+              return 0;
+            }
+          });
+    }
     compiler.disableThreads();
     this.errorManager = new ClutzErrorManager(System.err,
         ErrorFormat.MULTILINE.toFormatter(compiler, true), opts.debug, opts.reportMissingTypes);
@@ -456,7 +460,7 @@ class DeclarationGenerator {
           emit(":");
           TypedVar var = topScope.getOwnSlot(reservedProvide);
           if (var != null) {
-            TreeWalker walker = new TreeWalker(compiler.getTypeRegistry(), provides, false);
+            TreeWalker walker = new TreeWalker(provides, false);
             walker.visitType(var.getType());
           } else {
             emit("any");
@@ -703,7 +707,7 @@ class DeclarationGenerator {
     } else {
       emitNamespaceBegin(namespace);
     }
-    TreeWalker treeWalker = new TreeWalker(compiler.getTypeRegistry(), provides, isExtern);
+    TreeWalker treeWalker = new TreeWalker(provides, isExtern);
     if (isDefault) {
       if (isPrivate(symbol.getJSDocInfo()) && !isConstructor(symbol.getJSDocInfo())) {
         treeWalker.emitPrivateValue(emitName);
@@ -911,16 +915,14 @@ class DeclarationGenerator {
   }
   
   private JSType maybeWrapUnknownType(JSType type, JSTypeExpression typeAst) {
-    if (!type.isUnknownType()) {
+    if (!(type.isUnknownType() || type.isNoResolvedType()) || typeAst == null) {
       return type;
     }
     TypeI namedType = typeAst.getRoot().getTypeI();
     if (namedType != null) {
       return (JSType) namedType; // Cast is safe: Clutz always uses Old Type Inference (OTI)
     }
-    return typeRegistry.createNamedType(
-        Constants.INTERNAL_NAMESPACE + ".MissingTypeFixYourDeps", null, -1, -1);
-//    return type;
+    return type;
   }
 
   private boolean isPrivate(String name) {
@@ -1057,7 +1059,6 @@ class DeclarationGenerator {
   }
 
   private class TreeWalker {
-    private final JSTypeRegistry typeRegistry;
     private final Set<String> provides;
     /** Whether the symbol we are walking was defined in an extern file */
     private final boolean isExtern;
@@ -1072,8 +1073,7 @@ class DeclarationGenerator {
       }
     };
 
-    private TreeWalker(JSTypeRegistry typeRegistry, Set<String> provides, boolean isExtern) {
-      this.typeRegistry = typeRegistry;
+    private TreeWalker(Set<String> provides, boolean isExtern) {
       this.provides = provides;
       this.isExtern = isExtern;
     }
@@ -1312,8 +1312,8 @@ class DeclarationGenerator {
 
           // Some template variables can be already defined at the class definition.
           // Closure and TypeScript disagree in that case, in closure redeclaring a class template
-          // variable at a method does nothing, but in Typescript it introduces a new variable.
-          // To perserve the sementics from closure we skip emitting redeclared variables.
+          // variable at a method does nothing, but in TypeScript it introduces a new variable.
+          // To preserve the semantics from closure we skip emitting redeclared variables.
           if (alreadyEmittedTemplateType.contains(displayName)) {
             continue;
           }
@@ -1446,7 +1446,6 @@ class DeclarationGenerator {
         return;
       }
       Visitor<Void> visitor = new Visitor<Void>() {
-
         @Override
         public Void caseBooleanType() {
           emit("boolean");
@@ -1479,8 +1478,12 @@ class DeclarationGenerator {
 
         @Override
         public Void caseNamedType(NamedType type) {
-          visitType(type.getReferencedType());
-          return null;
+          JSType referenced = type.getReferencedType();
+          if (!referenced.isNoResolvedType()) {
+            visitType(referenced);
+            return null;
+          }
+          return emitObjectType(type, false, false);
         }
 
         @Override
@@ -1928,7 +1931,11 @@ class DeclarationGenerator {
       }
       // The static methods from the function prototype are provided by lib.d.ts.
       if (isStatic && isFunctionPrototypeProp(propName)) return;
-      maybeEmitJsDoc(objType.getOwnPropertyJSDocInfo(propName), /* ignoreParams */ false);
+      JSDocInfo info = objType.getOwnPropertyJSDocInfo(propName);
+      if (info != null) {
+        propertyType = maybeWrapUnknownType(propertyType, info.getType());
+      }
+      maybeEmitJsDoc(info, /* ignoreParams */ false);
       emitProperty(propName, propertyType, isStatic, forcePropDeclaration, classTemplateTypeNames);
     }
 
