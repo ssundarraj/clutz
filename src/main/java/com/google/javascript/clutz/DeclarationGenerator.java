@@ -1254,7 +1254,7 @@ class DeclarationGenerator {
       if (ftype.getExtendedInterfacesCount() > 0) {
         emit("extends");
         Iterator<ObjectType> it = ftype.getExtendedInterfaces().iterator();
-        emitCommaSeparatedInterfaces(it);
+        emitCommaSeparatedInterfaces(it, ftype.getJSDocInfo().getExtendedInterfaces().iterator());
       }
       // Class extends another class
       ObjectType superType = getSuperType(ftype);
@@ -1269,15 +1269,18 @@ class DeclarationGenerator {
       Iterator<ObjectType> it = ftype.getOwnImplementedInterfaces().iterator();
       if (it.hasNext()) {
         emit("implements");
-        emitCommaSeparatedInterfaces(it);
+        emitCommaSeparatedInterfaces(
+            it, ftype.getJSDocInfo().getImplementedInterfaces().iterator());
       }
 
       visitObjectType(ftype, ftype.getPrototype(), getTemplateTypeNames(ftype));
     }
 
-    private void emitCommaSeparatedInterfaces(Iterator<ObjectType> it) {
+    private void emitCommaSeparatedInterfaces(Iterator<ObjectType> it, Iterator<JSTypeExpression> typeAsts) {
       while (it.hasNext()) {
         ObjectType type = it.next();
+        JSTypeExpression typeAst = typeAsts.next();
+        type = (ObjectType) maybeWrapUnknownType(type, typeAst);
         if (isPrivate(type.getJSDocInfo()) && !isConstructor(type.getJSDocInfo())) {
           // TypeScript does not allow public APIs that expose non-exported/private types.
           emit(Constants.INTERNAL_NAMESPACE + ".PrivateInterface");
