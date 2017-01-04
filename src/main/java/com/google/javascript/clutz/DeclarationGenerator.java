@@ -200,7 +200,7 @@ class DeclarationGenerator {
     this.compiler = new Compiler();
     compiler.disableThreads();
     this.errorManager = new ClutzErrorManager(System.err,
-        ErrorFormat.MULTILINE.toFormatter(compiler, true), opts.debug);
+        ErrorFormat.MULTILINE.toFormatter(compiler, true), opts.debug, false);
     compiler.setErrorManager(errorManager);
     UNKNOWN_TYPE = compiler.getTypeRegistry().getNativeType(JSTypeNative.UNKNOWN_TYPE);
     NUMBER_TYPE = compiler.getTypeRegistry().getNativeType(JSTypeNative.NUMBER_TYPE);

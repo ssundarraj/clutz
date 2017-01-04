@@ -13,15 +13,15 @@ import java.io.PrintStream;
  */
 final class ClutzErrorManager extends PrintStreamErrorManager {
   private final boolean debug;
-  private boolean reportMissingTypes;
+  private boolean partialCompilation;
 
   private boolean hasEmittedMissingTypesExplanation = false;
 
   ClutzErrorManager(PrintStream stream, MessageFormatter formatter, boolean debug,
-      boolean reportMissingTypes) {
+      boolean partialCompilation) {
     super(formatter, stream);
     this.debug = debug;
-    this.reportMissingTypes = reportMissingTypes;
+    this.partialCompilation = partialCompilation;
   }
 
   @Override
@@ -29,23 +29,10 @@ final class ClutzErrorManager extends PrintStreamErrorManager {
     // Ignore warnings in non-debug mode.
     if (!debug && level == CheckLevel.WARNING) return;
 
-    boolean partialCompileError = DiagnosticGroups.PARTIAL_COMPILE.matches(error);
-    
-//    boolean isUndefinedVar =
-//        DiagnosticGroups.UNDEFINED_VARIABLES.matches(error)
-//            || DiagnosticGroups.UNDEFINED_NAMES.matches(error);
-//    boolean isMissingError =
-//        error.description.contains("Bad type annotation. Unknown type")
-//            || error.description.contains("namespace never provided")
-//            || (error.description.contains("Required namespace")
-//                && error.description.contains("never defined"))
-//            || error.description.contains("never defined on")
-//            || error.description.contains("not defined on any superclass")
-//            || error.description.contains("illegal initialization of @define")
-//            || error.description.contains("with type None");
-    if (partialCompileError && !reportMissingTypes) {
+    if (partialCompilation && DiagnosticGroups.PARTIAL_COMPILE.matches(error)) {
       return;  // Ignore the error completely.
     }
+
     if (!hasEmittedMissingTypesExplanation) {
       // Prepend an error that hints at missing externs/dependencies.
       hasEmittedMissingTypesExplanation = true;

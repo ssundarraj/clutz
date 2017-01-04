@@ -22,7 +22,7 @@ public class ClutzErrorManagerTest {
             "goog.provide('foo.x');",
             "/** @param {some.Unknown} y */",
             "foo.x = function(y) {};")
-        .ignoringMissingTypes()
+        .withPartialCompilation()
         .diagnosticStream()
         .isEmpty();
   }
@@ -32,7 +32,7 @@ public class ClutzErrorManagerTest {
     assertThatProgram(
             "goog.provide('foo.x');",
             "foo.x = function() { JSON.serialize(unknownGlobal); };")
-        .ignoringMissingTypes()
+        .withPartialCompilation()
         .diagnosticStream()
         .isEmpty();
   }

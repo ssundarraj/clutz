@@ -33,6 +33,7 @@ class ProgramSubject extends Subject<ProgramSubject, ProgramSubject.Program> {
   public boolean withPlatform = false;
   public String extraExternFile = null;
   public boolean emitPlatformExterns;
+  boolean partialCompilation = false; 
 
   static ProgramSubject assertThatProgram(String... sourceLines) {
     String sourceText = Joiner.on('\n').join(sourceLines);
@@ -58,6 +59,11 @@ class ProgramSubject extends Subject<ProgramSubject, ProgramSubject.Program> {
 
   ProgramSubject(FailureStrategy failureStrategy, ProgramSubject.Program subject) {
     super(failureStrategy, subject);
+  }
+
+  ProgramSubject withPartialCompilation() {
+    partialCompilation = true;
+    return this;
   }
 
   void generatesDeclarations(String expected) {
