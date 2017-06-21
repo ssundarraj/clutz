@@ -1,6 +1,6 @@
 goog.provide('forward.A');
 
-goog.forwardDeclare('forward.D');
+// goog.forwardDeclare('forward.D');
 
 /**
  * @constructor

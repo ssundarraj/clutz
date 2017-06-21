@@ -26,11 +26,12 @@ final class ClutzErrorManager extends PrintStreamErrorManager {
 
     if (reportClutzMissingTypes
         && error.description.contains("Bad type annotation. Unknown type")) {
+      return;
       // Prepend an error that hints at missing externs/dependencies.
-      reportClutzMissingTypes = false;
+//      reportClutzMissingTypes = false;
       // Leave out the location on purpose, the specific places of missing types are reported from
       // the original message; without a location this error sorts first, so that it is seen first.
-      this.report(CheckLevel.ERROR, JSError.make(DeclarationGenerator.CLUTZ_MISSING_TYPES));
+//      this.report(CheckLevel.ERROR, JSError.make(DeclarationGenerator.CLUTZ_MISSING_TYPES));
       // Fall through, still report the actual error below.
     }
     super.report(level, error);
